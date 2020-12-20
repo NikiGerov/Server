@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,6 +26,8 @@ public final class ClientRequestHandler extends Thread {
     private final BufferedReader inFromClient;
     private static final Logger LOGGER = Logger.getLogger(ClientRequestHandler.class.getName());
     private ClientBean clientConnectedTo = null;
+    
+    private Connection connection = ConnectionConfiguration.getConnection();
     
     public ClientRequestHandler(final Map<ClientBean, ClientRequestHandler> clients, final Socket socket, final Long id) 
     		throws IOException {
@@ -58,11 +62,23 @@ public final class ClientRequestHandler extends Thread {
                 	sendListOfUsersToClient();
                     break;
                 case Command.MSG:
+                	
+                	final Long msgToId = Long.parseLong(inputLine.split(" ")[1]);
+                	final String msgContent = inputLine.split(" ")[3];
                 	if(clientConnectedTo != null && !currentCommand.equals("CONNECTTO"))
                 	{
                 		ClientRequestHandler msgTo = clients.get(clientConnectedTo);
                 		PrintWriter out = msgTo.outToClient;
     					out.println(inputLine);
+    					
+    					DbUtils utils = new DbUtils(connection);
+                		utils.sendMsg(id, clientConnectedTo.getId(), 1, msgContent);
+                	}
+                	else
+                	{
+                		//offline msg
+                		DbUtils utils = new DbUtils(connection);
+                		utils.sendMsg(id, msgToId, 0, msgContent);
                 	}
                     break;
                     
@@ -89,7 +105,7 @@ public final class ClientRequestHandler extends Thread {
 
             outToClient.close();
             inFromClient.close();
-        } catch (final IOException e) {
+        } catch (final IOException | SQLException e) {
             LOGGER.log(Level.INFO, "Error occured while handling request for client " + id);
             LOGGER.log(Level.INFO, e.getMessage(), e);
         }

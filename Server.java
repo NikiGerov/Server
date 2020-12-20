@@ -8,7 +8,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,9 +29,11 @@ public final class Server {
             while (true) {
                 clientSocket = serverSocket.accept();
                 BufferedReader inFromClient = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                String name = inFromClient.readLine();
+                String line =  inFromClient.readLine();
+                String name = line.split(" ")[0];
+                Long id = Long.parseLong(line.split(" ")[1]);
                 
-                final ClientBean clientBean = generateClientBean(name);
+                final ClientBean clientBean = generateClientBean(name, id);
                 final ClientRequestHandler clientHandler = new ClientRequestHandler(clients, clientSocket, clientBean.getId());
                 clients.put(clientBean, clientHandler);
                 clientHandler.start();
@@ -44,15 +45,15 @@ public final class Server {
         }
     }
 
-    private static ClientBean generateClientBean(String name) {
-        Long id = 1l;
-        for(Entry<ClientBean, ClientRequestHandler> c : clients.entrySet())
-        {
-        	if(c.getKey().getId().equals(id))
-        	{
-        		id++;
-        	}
-        }
+    private static ClientBean generateClientBean(String name, Long id) {
+//        Long id = 1l;
+//        for(Entry<ClientBean, ClientRequestHandler> c : clients.entrySet())
+//        {
+//        	if(c.getKey().getId().equals(id))
+//        	{
+//        		id++;
+//        	}
+//        }
 
         ClientBean bean = new ClientBean(id, name);
         return bean;
