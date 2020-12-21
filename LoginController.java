@@ -56,24 +56,16 @@ public class LoginController implements Initializable {
 		StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
 		return passwordEncryptor.encryptPassword(password);
 	}
-		
-	/*private boolean isMatch(String plainPass, String dbPass) {
-		StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();		
-		return passwordEncryptor.checkPassword(plainPass, dbPass);
-	}
-	*/
-
 	
 	public void register(ActionEvent event)
 	{
 		String username = txtUsername.getText().toString();
-		//String password = txtPassword.getText().toString();	
 		String password = encryptPassword(txtPassword.getText().toString());		
 						
 		if(username.length() > 0 && password.length() > 0)
 		{
 			try {
-				String sql = "INSERT INTO user (`name`, `password`) VALUES (?, ?)";
+				String sql = "INSERT INTO user (name, password) VALUES (?, ?)";
 				PreparedStatement prepStmt = connection.prepareStatement(sql);
 				prepStmt.setString(1, username);
 				prepStmt.setString(2, password);
@@ -110,7 +102,6 @@ public class LoginController implements Initializable {
 		String password = txtLoginPassword.getText().toString();
 		entryUser = new User(username, password);
 
-		
 		String sql = "SELECT * FROM user WHERE name = ?";
 		PreparedStatement prepStmt = connection.prepareStatement(sql);
 		prepStmt.setString(1, username);
@@ -120,7 +111,9 @@ public class LoginController implements Initializable {
 		if (!resultSet.next()) {
 			infoBox("Please enter correct username and password", null, "Failed!");
 		} else {
-			dbUser = new User(resultSet.getString("name"), resultSet.getString("password"));
+			dbUser = new User(resultSet.getInt("user_id"), resultSet.getString("name"), resultSet.getString("password"));
+//			System.out.println("entryUser: " + entryUser);
+//			System.out.println("dbUser: " + dbUser);
 			if(isMatch(entryUser, dbUser)) {
 				FXMLLoader loader = new FXMLLoader();
 				loader.setLocation(getClass().getResource("/gui/main.fxml"));
@@ -130,6 +123,7 @@ public class LoginController implements Initializable {
 				
 				MainScreenController mainScreenController = loader.getController();
 				mainScreenController.initUser(username);
+				mainScreenController.initUser(dbUser);
 				mainScreenController.initConnention();
 				
 				Stage newStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -144,14 +138,6 @@ public class LoginController implements Initializable {
 
 	}
 	
-//	public static void infoBox(String infoMessagem, String headerText, String title)
-//	{
-//		Alert alert = new Alert(AlertType.CONFIRMATION);
-//		alert.setContentText(infoMessagem);
-//		alert.setTitle(title);
-//		alert.setHeaderText(headerText);
-//		alert.showAndWait();
-//	}
 	
 	public static void infoBox(String infoMessagem, String headerText, String title)
 	{

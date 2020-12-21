@@ -20,11 +20,11 @@ import java.util.logging.Logger;
  */
 public final class ClientRequestHandler extends Thread {
 
+	private static final Logger LOGGER = Logger.getLogger(ClientRequestHandler.class.getName());
     private final Map<ClientBean, ClientRequestHandler> clients;
     private final Long id;
     private final PrintWriter outToClient;
     private final BufferedReader inFromClient;
-    private static final Logger LOGGER = Logger.getLogger(ClientRequestHandler.class.getName());
     private ClientBean clientConnectedTo = null;
     
     private Connection connection = ConnectionConfiguration.getConnection();
@@ -50,13 +50,20 @@ public final class ClientRequestHandler extends Thread {
                 case Command.CONNECTTO:
                     final String user = inputLine.split(" ", 2)[1];
                 	
+                    boolean isUserFound = false;
             		for(Entry<ClientBean, ClientRequestHandler> c : clients.entrySet())
         			{
         				if (c.getKey().getName().equals(user))
             			{
         					clientConnectedTo = c.getKey();
+        					isUserFound = true;
             			}
         			}
+            		
+            		if(!isUserFound)
+            		{
+            			clientConnectedTo = null;
+            		}
                     break;
                 case Command.LOADUSERS:
                 	sendListOfUsersToClient();
@@ -64,7 +71,10 @@ public final class ClientRequestHandler extends Thread {
                 case Command.MSG:
                 	
                 	final Long msgToId = Long.parseLong(inputLine.split(" ")[1]);
-                	final String msgContent = inputLine.split(" ")[3];
+                	final String fromUser = inputLine.split(" ")[2];
+					
+                	String msgToClient = inputLine.substring(
+                			currentCommand.length() + msgToId.toString().length() + fromUser.length() + 3, inputLine.length());
                 	if(clientConnectedTo != null && !currentCommand.equals("CONNECTTO"))
                 	{
                 		ClientRequestHandler msgTo = clients.get(clientConnectedTo);
@@ -72,13 +82,13 @@ public final class ClientRequestHandler extends Thread {
     					out.println(inputLine);
     					
     					DbUtils utils = new DbUtils(connection);
-                		utils.sendMsg(id, clientConnectedTo.getId(), 1, msgContent);
+                		utils.sendMsg(id, clientConnectedTo.getId(), 1, msgToClient);
                 	}
                 	else
                 	{
                 		//offline msg
                 		DbUtils utils = new DbUtils(connection);
-                		utils.sendMsg(id, msgToId, 0, msgContent);
+                		utils.sendMsg(id, msgToId, 0, msgToClient);
                 	}
                     break;
                     
@@ -122,12 +132,4 @@ public final class ClientRequestHandler extends Thread {
         	outToClient.println(users);
 //        }
     }
-    
-//    private void disconnect() {
-//
-//        final String disconnectMessage = id + " disconnected from the server.";
-//        LOGGER.log(Level.INFO, disconnectMessage);
-//
-//        clients.remove(id);
-//    }
 }

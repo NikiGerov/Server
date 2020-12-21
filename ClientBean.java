@@ -22,4 +22,8 @@ public class ClientBean {
 		this.id = id;
 		this.name = name;
 	}
+	
+	public ClientBean() {
+		
+	}
 }
