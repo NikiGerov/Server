@@ -1,6 +1,8 @@
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Date;
 
 public class DbUtils {
 	
@@ -8,7 +10,7 @@ public class DbUtils {
 //	private ResultSet resultSet;
 	private Connection connection;
 	
-	private final String ADD_MSG = "INSERT INTO messages(sender_id,receiver_id,delivered, content) VALUES (?,?,?,?)";
+	private final String ADD_MSG = "INSERT INTO messages(sender_id,receiver_id,delivered, content, date) VALUES (?,?,?,?,?)";
 
 	public DbUtils(Connection conn) {
 		connection = conn;
@@ -20,6 +22,7 @@ public class DbUtils {
 		prepStmt.setLong(2, receiver);
 		prepStmt.setInt(3, delivered);
 		prepStmt.setString(4, content);
+		prepStmt.setTimestamp(5, new Timestamp(new Date().getTime()));
 		prepStmt.execute();
 	}
 }
